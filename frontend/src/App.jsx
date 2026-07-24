@@ -22,7 +22,7 @@ function App() {
   const [language, setLanguage] = useState('English');
   const [generatedReply, setGeneratedReply] = useState('');
   const [history, setHistory] = useState([]);
-  
+
   // Status states
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,14 +48,14 @@ function App() {
       const res = await fetch('/api/shop-info');
       if (!res.ok) throw new Error('Failed to load shop info.');
       const data = await res.json();
-      
+
       // If backend sends nested format with apiKey status
       if (data.storeName !== undefined) {
         setShopInfo(data);
       } else if (data.data) {
         setShopInfo(data.data);
       }
-      
+
       if (data.apiKeyConfigured !== undefined) {
         setApiKeyConfigured(data.apiKeyConfigured);
       }
@@ -129,17 +129,17 @@ function App() {
         },
         body: JSON.stringify(shopInfo)
       });
-      
+
       if (!res.ok) throw new Error('Failed to save shop info.');
       const result = await res.json();
-      
+
       showToast('Shop data saved successfully!');
-      
+
       // Update local state just in case
       if (result.data) {
         setShopInfo(result.data);
       }
-      
+
       // Let's recheck backend API key status as well
       if (result.apiKeyConfigured !== undefined) {
         setApiKeyConfigured(result.apiKeyConfigured);
@@ -185,7 +185,7 @@ function App() {
       }
 
       setGeneratedReply(data.reply);
-      
+
       // Add to session history
       setHistory(prev => [
         {
@@ -223,8 +223,11 @@ function App() {
       {/* Header */}
       <header className="app-header">
         <div className="app-title-group">
-          <h1>Dukaan Assistant</h1>
-          <p>Draft precise replies for your customers using your own store facts</p>
+          <div className="app-mark" aria-hidden="true">D</div>
+          <div>
+            <h1>Dukaan Assistant</h1>
+            <p>Draft precise replies for your customers using your own store facts</p>
+          </div>
         </div>
         <div>
           {apiKeyConfigured !== null && (
@@ -247,14 +250,14 @@ function App() {
 
       {/* Main Grid */}
       <main className="dashboard-grid">
-        
+
         {/* Left Column: Shop Info Form */}
         <section className="panel">
           <div className="panel-header">
             <h2>My Shop Info</h2>
-            <button 
-              onClick={saveShopInfo} 
-              disabled={isSaving} 
+            <button
+              onClick={saveShopInfo}
+              disabled={isSaving}
               className="btn btn-primary"
             >
               {isSaving ? (
@@ -267,9 +270,9 @@ function App() {
 
           <div className="form-group">
             <label htmlFor="store-name">Store Name</label>
-            <input 
+            <input
               id="store-name"
-              type="text" 
+              type="text"
               className="input-field"
               value={shopInfo.storeName}
               onChange={(e) => handleShopInfoChange('storeName', e.target.value)}
@@ -279,9 +282,9 @@ function App() {
 
           <div className="form-group">
             <label htmlFor="store-hours">Store Hours</label>
-            <input 
+            <input
               id="store-hours"
-              type="text" 
+              type="text"
               className="input-field"
               value={shopInfo.storeHours}
               onChange={(e) => handleShopInfoChange('storeHours', e.target.value)}
@@ -291,7 +294,7 @@ function App() {
 
           <div className="form-group">
             <label htmlFor="delivery-policy">Delivery Policy & Rules</label>
-            <textarea 
+            <textarea
               id="delivery-policy"
               className="textarea-field"
               value={shopInfo.deliveryPolicy}
@@ -304,7 +307,7 @@ function App() {
           <div className="inventory-section">
             <div className="inventory-header">
               <h3>Products, Prices & Stock</h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
                 {shopInfo.items.length} items listed
               </span>
             </div>
@@ -324,7 +327,7 @@ function App() {
                     {shopInfo.items.map((item, idx) => (
                       <tr key={item.id}>
                         <td>
-                          <input 
+                          <input
                             aria-label={`Product name for item ${idx + 1}`}
                             type="text"
                             className="input-cell"
@@ -333,7 +336,7 @@ function App() {
                           />
                         </td>
                         <td>
-                          <input 
+                          <input
                             aria-label={`Price for item ${idx + 1}`}
                             type="text"
                             className="input-cell"
@@ -342,7 +345,7 @@ function App() {
                           />
                         </td>
                         <td>
-                          <select 
+                          <select
                             aria-label={`Stock status for item ${idx + 1}`}
                             className={`status-select ${item.status === 'In Stock' ? 'in-stock' : 'out-of-stock'}`}
                             value={item.status}
@@ -353,7 +356,7 @@ function App() {
                           </select>
                         </td>
                         <td>
-                          <button 
+                          <button
                             onClick={() => handleDeleteItem(item.id)}
                             className="btn-danger-icon"
                             title="Delete Item"
@@ -370,15 +373,15 @@ function App() {
                   </tbody>
                 </table>
               ) : (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                  No items in inventory. Add one below.
+                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                  No items yet — add your first product below.
                 </div>
               )}
             </div>
 
             {/* Add Item Inline Form */}
             <form onSubmit={handleAddItem} className="add-item-form">
-              <input 
+              <input
                 aria-label="New product name"
                 type="text"
                 className="input-field"
@@ -386,7 +389,7 @@ function App() {
                 value={newItem.name}
                 onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
               />
-              <input 
+              <input
                 aria-label="New product price"
                 type="text"
                 className="input-field"
@@ -394,7 +397,7 @@ function App() {
                 value={newItem.price}
                 onChange={(e) => setNewItem(prev => ({ ...prev, price: e.target.value }))}
               />
-              <select 
+              <select
                 aria-label="New product stock status"
                 className="select-field"
                 value={newItem.status}
@@ -403,10 +406,10 @@ function App() {
                 <option value="In Stock">In Stock</option>
                 <option value="Out of Stock">Out of Stock</option>
               </select>
-              <button 
-                type="submit" 
-                className="btn btn-secondary" 
-                style={{ padding: '6px 12px', fontSize: '0.8125rem' }}
+              <button
+                type="submit"
+                className="btn btn-secondary"
+                style={{ padding: '7px 14px', fontSize: '0.8125rem' }}
               >
                 Add
               </button>
@@ -421,7 +424,7 @@ function App() {
             <div className="actions-row">
               <div className="language-selector">
                 <label htmlFor="language-select">Language</label>
-                <select 
+                <select
                   id="language-select"
                   className="select-field"
                   value={language}
@@ -437,7 +440,7 @@ function App() {
 
           <div className="form-group">
             <label htmlFor="customer-query">Paste Customer Question</label>
-            <textarea 
+            <textarea
               id="customer-query"
               className="textarea-field"
               rows="4"
@@ -447,11 +450,11 @@ function App() {
             />
           </div>
 
-          <button 
-            onClick={generateReply} 
+          <button
+            onClick={generateReply}
             disabled={isLoading || !question.trim()}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '10px' }}
+            style={{ width: '100%', padding: '11px' }}
           >
             {isLoading ? (
               <>
@@ -465,7 +468,7 @@ function App() {
             <div className="draft-header">
               <span className="draft-label">Suggested Reply ({language})</span>
               {generatedReply && (
-                <button 
+                <button
                   onClick={copyToClipboard}
                   className="btn btn-secondary"
                   style={{ padding: '4px 10px', fontSize: '0.75rem' }}
