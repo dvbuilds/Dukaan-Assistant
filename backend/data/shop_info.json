@@ -1,0 +1,49 @@
+{
+  "storeName": "Gupta General Store",
+  "storeHours": "9:00 AM - 9:00 PM, Monday to Saturday (Sunday closed)",
+  "deliveryPolicy": "Free home delivery for orders above ₹500 within 2 km. For orders below ₹500, delivery charge is ₹30. Standard delivery time is 2-4 hours.",
+  "items": [
+    {
+      "id": "1",
+      "name": "Fortune Mustard Oil (1 Litre)",
+      "price": "175",
+      "status": "In Stock"
+    },
+    {
+      "id": "2",
+      "name": "Aashirvaad Shudh Chakki Atta (5 kg)",
+      "price": "260",
+      "status": "In Stock"
+    },
+    {
+      "id": "3",
+      "name": "Tata Salt (1 kg)",
+      "price": "28",
+      "status": "In Stock"
+    },
+    {
+      "id": "4",
+      "name": "Amul Butter (500g)",
+      "price": "275",
+      "status": "Out of Stock"
+    },
+    {
+      "id": "5",
+      "name": "Maggi 2-Minute Noodles (Pack of 12)",
+      "price": "168",
+      "status": "In Stock"
+    },
+    {
+      "id": "6",
+      "name": "Surf Excel Easy Wash (1 kg)",
+      "price": "140",
+      "status": "In Stock"
+    },
+    {
+      "id": "7",
+      "name": "Dettol Liquid Handwash Refill (175ml)",
+      "price": "99",
+      "status": "Out of Stock"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+/* Global Reset and Typography */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Color System */
+  --bg-app: #f8fafc;
+  --bg-panel: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-focus: #166534; /* Forest Green Accent */
+  --accent-color: #166534;
+  --accent-hover: #15803d;
+  --bg-hover: #f1f5f9;
+  --bg-badge-success: #f0fdf4;
+  --text-badge-success: #166534;
+  --bg-badge-danger: #fef2f2;
+  --text-badge-danger: #991b1b;
+  
+  /* Fonts & Radius */
+  --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  
+  /* Transitions */
+  --transition: all 0.2s ease-in-out;
+}
+
+body {
+  font-family: var(--font-stack);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: var(--radius-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
