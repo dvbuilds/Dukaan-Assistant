@@ -1,0 +1,416 @@
+import React, { useState } from 'react';
+
+export default function CartScreen({ 
+  cart, 
+  products, 
+  onUpdateQuantity, 
+  onRemoveItem, 
+  onClearCart, 
+  selectedLocation, 
+  onChangeLocationClick,
+  onToast
+}) {
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0); // dollar amount discount
+  const [appliedPromoName, setAppliedPromoName] = useState('');
+  const [deliveryNotes, setDeliveryNotes] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState(1); // 1: review, 2: success
+  const [orderId, setOrderId] = useState('');
+
+  // Map cart items to full product data
+  const cartItems = cart.map(item => {
+    const product = products.find(p => p.id === item.productId);
+    return {
+      ...item,
+      product
+    };
+  }).filter(item => item.product != null);
+
+  // Calculate total items
+  const totalItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Subtotal calculation
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  // Fixed Delivery Fee & Tax as in spec
+  const deliveryFee = subtotal > 50 || subtotal === 0 ? 0 : 4.99;
+  const tax = subtotal > 0 ? 1.85 : 0;
+
+  // Final Total
+  const finalTotal = Math.max(0, subtotal + deliveryFee + tax - appliedDiscount);
+
+  const handleApplyPromo = (e) => {
+    e.preventDefault();
+    const cleanCode = promoCode.trim().toUpperCase();
+
+    if (cleanCode === 'FRESH20' || cleanCode === 'AZURE20') {
+      const discount = subtotal * 0.20;
+      setAppliedDiscount(discount);
+      setAppliedPromoName('FRESH20 (20% Off)');
+      if (onToast) onToast('Promo code FRESH20 applied! Saved 20%');
+    } else if (cleanCode === 'AZURE10' || cleanCode === 'FRESH10') {
+      setAppliedDiscount(10);
+      setAppliedPromoName('AZURE10 ($10 Off)');
+      if (onToast) onToast('Promo code AZURE10 applied! Saved $10');
+    } else {
+      if (onToast) onToast('Invalid promo code. Try "FRESH20" or "AZURE10"');
+    }
+  };
+
+  const handleStartCheckout = () => {
+    if (cartItems.length === 0) {
+      if (onToast) onToast('Your cart is empty! Add groceries to checkout.');
+      return;
+    }
+    const generatedId = 'AH-' + Math.floor(100000 + Math.random() * 900000);
+    setOrderId(generatedId);
+    setIsCheckingOut(true);
+  };
+
+  const handleConfirmOrder = () => {
+    setCheckoutStep(2);
+  };
+
+  const handleFinishOrder = () => {
+    onClearCart();
+    setIsCheckingOut(false);
+    setCheckoutStep(1);
+    if (onToast) onToast('Order placed successfully! Delivery track active.');
+  };
+
+  return (
+    <div className="space-y-10">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-[#c1c7d2]/60 pb-4">
+        <h1 className="text-3xl sm:text-4xl font-hanken font-bold text-[#1b1c1c]">
+          Your Cart
+        </h1>
+        <span className="font-work text-sm text-[#414750] font-bold">
+          ({totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'})
+        </span>
+      </div>
+
+      {cartItems.length === 0 ? (
+        <div className="bg-white border border-[#c1c7d2] rounded-2xl p-12 text-center space-y-4 max-w-xl mx-auto shadow-xs">
+          <span className="material-symbols-outlined text-6xl text-[#003e6f]/30">
+            shopping_basket
+          </span>
+          <h2 className="text-xl font-hanken font-bold text-[#1b1c1c]">
+            Your shopping basket is empty
+          </h2>
+          <p className="text-sm font-work text-[#414750]">
+            Explore our fresh organic produce, weekly deals, and local farm partners to fill your cart.
+          </p>
+          <button 
+            onClick={() => window.location.hash = ''}
+            className="px-6 py-3 bg-[#003e6f] text-white font-work font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-[#005696] transition-all"
+          >
+            Start Shopping Fresh
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          
+          {/* Left Column: Item List & Delivery Notes */}
+          <div className="flex-1 w-full space-y-6">
+            
+            {/* Product List Box */}
+            <div className="bg-white border border-[#c1c7d2] rounded-xl divide-y divide-[#c1c7d2]/60 overflow-hidden shadow-xs">
+              {cartItems.map(({ productId, quantity, product }) => (
+                <div key={productId} className="p-6 flex flex-col md:flex-row gap-6 items-start">
+                  
+                  {/* Thumbnail Image */}
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0 bg-[#efeded] rounded-lg overflow-hidden border border-[#c1c7d2]">
+                    <img 
+                      src={product.cartImage || product.image} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 w-full">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[11px] font-work font-bold text-[#727781] uppercase tracking-wider">
+                          {product.categoryLabel || product.category}
+                        </span>
+                        <h3 className="text-lg font-hanken font-bold text-[#1b1c1c] mt-0.5">
+                          {product.name}
+                        </h3>
+                        <p className="text-xs font-work text-[#414750] mt-1 leading-relaxed max-w-md">
+                          {product.description}
+                        </p>
+                      </div>
+
+                      <span className="font-hanken font-bold text-xl text-[#003e6f]">
+                        ${(product.price * quantity).toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Quantity Controls & Remove */}
+                    <div className="flex items-center justify-between mt-6 pt-3 border-t border-[#f5f3f3]">
+                      
+                      <div className="flex items-center border border-[#c1c7d2] rounded-lg bg-white overflow-hidden shadow-2xs">
+                        <button 
+                          onClick={() => onUpdateQuantity(productId, quantity - 1)}
+                          className="p-2 hover:bg-[#efeded] transition-colors text-[#1b1c1c] flex items-center justify-center"
+                          aria-label="Decrease quantity"
+                        >
+                          <span className="material-symbols-outlined text-sm">remove</span>
+                        </button>
+
+                        <span className="px-4 font-work font-bold text-sm text-[#1b1c1c]">
+                          {quantity}
+                        </span>
+
+                        <button 
+                          onClick={() => onUpdateQuantity(productId, quantity + 1)}
+                          className="p-2 hover:bg-[#efeded] transition-colors text-[#1b1c1c] flex items-center justify-center"
+                          aria-label="Increase quantity"
+                        >
+                          <span className="material-symbols-outlined text-sm">add</span>
+                        </button>
+                      </div>
+
+                      <button 
+                        onClick={() => onRemoveItem(productId)}
+                        className="text-[#ba1a1a] font-work font-bold text-xs flex items-center gap-1 hover:underline transition-all p-1"
+                      >
+                        <span className="material-symbols-outlined text-base">delete</span> 
+                        Remove
+                      </button>
+
+                    </div>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+
+            {/* Delivery Notes */}
+            <div className="bg-[#f5f3f3] border border-[#c1c7d2] rounded-xl p-6 shadow-xs space-y-3">
+              <h3 className="text-lg font-hanken font-bold text-[#1b1c1c]">
+                Delivery Notes
+              </h3>
+              <textarea 
+                value={deliveryNotes}
+                onChange={(e) => setDeliveryNotes(e.target.value)}
+                rows={3}
+                className="w-full bg-white border border-[#c1c7d2] rounded-lg p-3 text-sm font-work focus:ring-2 focus:ring-[#003e6f] focus:border-[#003e6f] outline-none resize-none"
+                placeholder="e.g. Please leave the package by the blue door or call if the gate is locked..."
+              />
+              <p className="text-xs font-work font-bold text-[#727781] italic">
+                Our couriers will do their best to follow your specific instructions.
+              </p>
+            </div>
+
+          </div>
+
+          {/* Right Column: Order Summary Sticky Sidebar */}
+          <aside className="w-full lg:w-[380px] xl:w-[420px] flex-shrink-0 space-y-6 lg:sticky lg:top-[90px]">
+            
+            <div className="bg-white border border-[#c1c7d2] rounded-xl p-6 sm:p-8 shadow-sm space-y-6">
+              
+              <h2 className="text-xl font-hanken font-bold text-[#1b1c1c] border-b border-[#c1c7d2] pb-4">
+                Order Summary
+              </h2>
+
+              <div className="space-y-3 font-work text-sm">
+                <div className="flex justify-between text-[#414750]">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-[#1b1c1c]">${subtotal.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between text-[#414750]">
+                  <span>Delivery Fee</span>
+                  <span className="font-bold text-[#1b1c1c]">
+                    {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)}`}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-[#414750]">
+                  <span>Estimated Tax</span>
+                  <span className="font-bold text-[#1b1c1c]">${tax.toFixed(2)}</span>
+                </div>
+
+                {appliedDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 p-2 rounded">
+                    <span>Discount ({appliedPromoName})</span>
+                    <span>-${appliedDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-[#c1c7d2] flex justify-between items-end">
+                  <span className="font-hanken font-bold text-lg text-[#1b1c1c]">Total</span>
+                  <span className="font-hanken font-extrabold text-2xl sm:text-3xl text-[#003e6f]">
+                    ${finalTotal.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Promo Code Input */}
+              <div className="space-y-2 pt-2">
+                <label className="block text-xs font-work font-bold text-[#414750] uppercase tracking-wider">
+                  Promo Code
+                </label>
+                <form onSubmit={handleApplyPromo} className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter code (e.g. FRESH20)"
+                    className="flex-1 bg-white border border-[#c1c7d2] rounded px-3 py-2 text-sm font-work uppercase"
+                  />
+                  <button 
+                    type="submit"
+                    className="px-4 py-2 bg-[#c8e6ff] text-[#001e2f] font-work font-bold text-xs uppercase rounded hover:bg-[#88ceff] transition-colors"
+                  >
+                    Apply
+                  </button>
+                </form>
+              </div>
+
+              {/* Checkout Button */}
+              <button 
+                onClick={handleStartCheckout}
+                className="w-full py-4 bg-[#003e6f] text-white font-work font-bold text-base rounded-xl flex items-center justify-center gap-2 hover:bg-[#005696] transition-all active:scale-98 shadow-md"
+              >
+                <span>Checkout Now</span>
+                <span className="material-symbols-outlined text-xl">arrow_forward</span>
+              </button>
+
+              {/* Payment Methods */}
+              <div className="pt-2 flex items-center justify-center gap-4">
+                <img 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBilk6ExLJ7_Q8nTuD3TLugZ0p2jJ3tEpgnBlGW4PqrEG2lz75aY1wPWUHLFblaWbOVCgmstFU480r2-s7dc660kQV6_CxepP9t4MHmhxsxGzGeHUF1mPw5rJKCUttBCLTuRH78g1RwzQp385UYpex_ANxn8Ct8lVeQRFc2uh50s3MuG0yXhHZmEndzR63xREuA6KHyO8iLNG-VvGfA4UPZr-MIaYeke1wugGi7lGGZinZf2_1ZAApQwCk0i6N8EbyeyphK9HD-X7ai"
+                  alt="Visa" 
+                  className="h-6 opacity-80"
+                />
+                <img 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1GuPjjCAHZIMNcCFwKMgU5Q5fCYlcRIsW-sAKp-xhc5cbH9tF_vkO6Gr1Pwvj72d8ctVr-7UZKXocHTX61kc_iCZ9r7vdvTgWKfq4ybdn7p_u9d9Dw3V5_asRF3AiO-1YIzLLduUIUfnIxXNXG0CkarSVTRzAvuLcX5zJ-3sLrB4UDCTbJWejEJSM4CmKy3s9uK-BkbS_PFa9MK5dAlDy5nNHDCGB5hrkyYFeANMr-W9afXBhFsor8_bYan2WmuiH6syMdghekx2A"
+                  alt="Mastercard" 
+                  className="h-6 opacity-80"
+                />
+                <img 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuxfKU9rJPv1EnMJ-O3cFjq8KVrqB7wvtCWMA5xaAxT3IMWc3uJfSf55cY0d9cnZbEIfwF-bTL1pSZofoCY7gwPc4KSabiJgoeI4SNP5OM8fOpVz2VFbW0qZyDX6WzBdk6tbN6XUVLcnRNFXtNyh1RUpfMxwXlOBZ904FYBG8D2HDqES8moOdlbGsGJfVs9Md_vCd5FAzapCalhgztUWqzu5O7Sjn_YItrlyZHd8dC5j460Y6RmotVn3l5J_Qo-aM7peOC9hmf4HxR"
+                  alt="Apple Pay" 
+                  className="h-6 opacity-80"
+                />
+              </div>
+
+            </div>
+
+            {/* Estimated Delivery Box */}
+            <div className="bg-[#efeded] rounded-xl p-6 border border-[#c1c7d2] space-y-2">
+              <div className="flex items-center gap-2 text-[#003e6f]">
+                <span className="material-symbols-outlined">local_shipping</span>
+                <span className="font-work font-bold text-xs uppercase tracking-wider">ESTIMATED DELIVERY</span>
+              </div>
+              <p className="font-work font-bold text-sm text-[#1b1c1c]">
+                Today, 4:00 PM – 6:00 PM
+              </p>
+              <p className="font-work text-xs text-[#414750]">
+                Delivering to 123 Azure Heights, {selectedLocation || 'Metropolitan City'}.
+              </p>
+              <button 
+                onClick={onChangeLocationClick}
+                className="mt-2 text-[#003e6f] font-work font-bold text-xs hover:underline block"
+              >
+                Change Address
+              </button>
+            </div>
+
+          </aside>
+
+        </div>
+      )}
+
+      {/* Interactive Checkout Modal */}
+      {isCheckingOut && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#c1c7d2] animate-in fade-in">
+            
+            {checkoutStep === 1 ? (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center border-b pb-3">
+                  <h3 className="font-hanken font-bold text-2xl text-[#003e6f] flex items-center gap-2">
+                    <span className="material-symbols-outlined">shopping_cart_checkout</span>
+                    Confirm Order #{orderId}
+                  </h3>
+                  <button onClick={() => setIsCheckingOut(false)} className="text-gray-400 hover:text-black">
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3 font-work text-sm text-[#414750]">
+                  <p className="flex justify-between">
+                    <span>Delivery Location:</span> 
+                    <span className="font-bold text-[#1b1c1c]">{selectedLocation}</span>
+                  </p>
+                  <p className="flex justify-between"><span>Delivery Window:</span> <span className="font-bold text-[#1b1c1c]">Today, 4:00 PM - 6:00 PM</span></p>
+                  <p className="flex justify-between"><span>Items ({totalItemsCount}):</span> <span className="font-bold text-[#1b1c1c]">${subtotal.toFixed(2)}</span></p>
+                  <p className="flex justify-between"><span>Total Charged:</span> <span className="font-bold text-[#003e6f] text-lg">${finalTotal.toFixed(2)}</span></p>
+                </div>
+
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs font-work text-amber-800 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-600">verified_user</span>
+                  100% Cold-Chain Guarantee. Free returns if produce does not meet farm freshness.
+                </div>
+
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setIsCheckingOut(false)}
+                    className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-xs uppercase"
+                  >
+                    Back to Cart
+                  </button>
+                  <button 
+                    onClick={handleConfirmOrder}
+                    className="flex-1 py-3 bg-[#003e6f] text-white rounded-xl font-bold text-xs uppercase hover:bg-[#005696]"
+                  >
+                    Place Order Now
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center space-y-6 py-4">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-4xl">check_circle</span>
+                </div>
+
+                <h3 className="font-hanken font-bold text-2xl text-[#003e6f]">
+                  Order Placed Successfully!
+                </h3>
+
+                <p className="font-work text-sm text-[#414750]">
+                  Thank you! Your order <span className="font-bold text-black">#{orderId}</span> has been dispatched to local Azure Harvest partners.
+                </p>
+
+                {/* Delivery Timeline Tracker */}
+                <div className="p-4 bg-[#f5f3f3] rounded-xl text-left space-y-3 font-work text-xs">
+                  <p className="font-bold text-[#003e6f]">Live Delivery Status:</p>
+                  <div className="flex items-center gap-3 text-emerald-700">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>Farm Sourcing & Packing (Estimated arrival: 45 min)</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleFinishOrder}
+                  className="w-full py-3.5 bg-[#003e6f] text-white rounded-xl font-bold text-xs uppercase hover:bg-[#005696]"
+                >
+                  Return to Storefront
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
