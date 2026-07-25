@@ -253,7 +253,7 @@ app.get('/api/shop-info', authMiddleware, async (req, res) => {
 app.post('/api/shop-info', authMiddleware, async (req, res) => {
   try {
     const { storeName, storeHours, deliveryPolicy } = req.body;
-    
+
     const currentStore = await Store.findById(req.storeId);
     let slug = currentStore.slug;
     if (storeName && storeName.trim() !== currentStore.storeName) {
@@ -416,7 +416,7 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.trim() === '' || apiKey.includes('YOUR_')) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: 'GEMINI_API_KEY environment variable is not configured or is using a placeholder. Please set a valid API key in backend/.env'
     });
   }
@@ -440,11 +440,10 @@ Shop Information:
 - Store Hours: ${store.storeHours || 'N/A'}
 - Delivery Policy: ${store.deliveryPolicy || 'N/A'}
 - Products/Items in Stock and Prices:
-${
-  products && products.length > 0
-    ? products.map(item => `  * ${item.productName}: Price: ₹${item.price}, Status: ${item.stockStatus}`).join('\n')
-    : '  * No product items listed.'
-}
+${products && products.length > 0
+        ? products.map(item => `  * ${item.productName}: Price: ₹${item.price}, Status: ${item.stockStatus}`).join('\n')
+        : '  * No product items listed.'
+      }
 
 Customer Question:
 "${question}"
@@ -452,9 +451,9 @@ Customer Question:
 Remember: Output ONLY the final customer-facing reply text. No thinking tags, no reasoning process, no constraint validation, no labels. If the information needed to answer the question is not present in the Shop Information, respond with: "I'm sorry, I don't have that information." (or equivalent translation in ${language || 'English'}).`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    
+
     console.log(`Calling Gemini API using model: ${model} for store ${store.storeName}...`);
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -481,7 +480,7 @@ Remember: Output ONLY the final customer-facing reply text. No thinking tags, no
     }
 
     const data = await response.json();
-    
+
     if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.length > 0) {
       let reply = data.candidates[0].content.parts
         .filter(part => part.text && !part.thought)
@@ -501,7 +500,7 @@ Remember: Output ONLY the final customer-facing reply text. No thinking tags, no
         source: 'owner'
       });
       await log.save();
-      
+
       res.json({ reply });
     } else {
       console.error('Unexpected Gemini API response structure:', data);
@@ -555,7 +554,7 @@ app.post('/api/public/:slug/ask', publicLimiter, async (req, res) => {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey || apiKey.trim() === '' || apiKey.includes('YOUR_')) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Assistant is currently offline. Please contact the store owner.'
       });
     }
@@ -571,11 +570,10 @@ Shop Information:
 - Store Hours: ${store.storeHours || 'N/A'}
 - Delivery Policy: ${store.deliveryPolicy || 'N/A'}
 - Products/Items in Stock and Prices:
-${
-  products && products.length > 0
-    ? products.map(item => `  * ${item.productName}: Price: ₹${item.price}, Status: ${item.stockStatus}`).join('\n')
-    : '  * No product items listed.'
-}
+${products && products.length > 0
+        ? products.map(item => `  * ${item.productName}: Price: ₹${item.price}, Status: ${item.stockStatus}`).join('\n')
+        : '  * No product items listed.'
+      }
 
 Customer Question:
 "${question}"
@@ -583,9 +581,9 @@ Customer Question:
 Remember: Output ONLY the final customer-facing reply text. No thinking tags, no reasoning process, no constraint validation, no labels. If the information needed to answer the question is not present in the Shop Information, respond with: "I'm sorry, I don't have that information." (or equivalent translation in ${language || 'English'}).`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    
+
     console.log(`Calling Gemini API (public request) using model: ${model} for store ${store.storeName}...`);
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -612,7 +610,7 @@ Remember: Output ONLY the final customer-facing reply text. No thinking tags, no
     }
 
     const data = await response.json();
-    
+
     if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.length > 0) {
       let reply = data.candidates[0].content.parts
         .filter(part => part.text && !part.thought)
@@ -632,7 +630,7 @@ Remember: Output ONLY the final customer-facing reply text. No thinking tags, no
         source: 'public'
       });
       await log.save();
-      
+
       res.json({ reply });
     } else {
       res.status(500).json({ error: 'Unexpected response format.' });
@@ -643,6 +641,10 @@ Remember: Output ONLY the final customer-facing reply text. No thinking tags, no
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => { ... });   // remove or wrap for local dev only
+
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+}
+
+export default app;
